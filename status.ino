@@ -3,7 +3,7 @@
 #define NUM_LEDS 15
 #define NUM_SENSORS 15
 #define DATA_PIN 10
-#define DEFAULT_THRESH 8
+#define DEFAULT_THRESH 5
 #define LED_BRIGHTNESS 30
 
 CRGB leds[NUM_LEDS];
@@ -28,25 +28,36 @@ void setup() {
   }
 
 //Set modified thresh values here
-thresh[7, 8, 9] = 4;
 
   //Setup console
   Serial.begin(9600); //begin Serial Communication
 }
-
 // the loop function runs over and over again forever
+
+int greenTicks[NUM_SENSORS] = {0};
 void loop() {
   for(int i=0; i<NUM_SENSORS; i++)
   {
     int raw_light = analogRead(light_sensor_pins[i]); // read the raw value from light_sensor pin
     int light = map(raw_light, 0, 1023, 0, 100); // map the value from 0, 1023 to 0, 100
-    Serial.print(String(light_sensor_pins[i]));
-    Serial.println("Sensor [" +  String(i) + "]" + String(light)); 
+    //Serial.print(String(light_sensor_pins[i]));
+    //Serial.println("Sensor [" +  String(i) + "]" + String(light)); 
     
     if (light>=thresh[i]){
-      leds[i] = CRGB::Green;
+      greenTicks[i]++;
+      if(i=5) {
+        Serial.println("Sensor [" + String(i) + "] activated");
+      }
+      if (greenTicks[i]>=100) {
+        leds[i] = CRGB::Green;
+        greenTicks[i] = 100;
+      }
     }
     else {
+      greenTicks[i] = 0;
+      if(i=5) {
+        Serial.println("Sensor [" + String(i) + "] reset");
+      }
       leds[i] = CRGB::Red;
     }
   }
