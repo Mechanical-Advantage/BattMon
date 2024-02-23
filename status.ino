@@ -3,12 +3,14 @@
 #define NUM_LEDS 15
 #define NUM_SENSORS 15
 #define DATA_PIN 10
-#define DEFAULT_THRESH 5
+#define DEFAULT_THRESH 10
 #define LED_BRIGHTNESS 30
 
 CRGB leds[NUM_LEDS];
 uint8_t light_sensor_pins[NUM_SENSORS] = {A1, A2, A3, A6, A5, A4, A7, A8, A9, A12, A11, A10, A13, A14, A15};
 int thresh[NUM_SENSORS];
+unsigned long startTime;
+unsigned long stopTime;
 
 void setup() {
   // Setup LEDs
@@ -45,20 +47,33 @@ void loop() {
     
     if (light>=thresh[i]){
       greenTicks[i]++;
-      if(i=5) {
-        Serial.println("Sensor [" + String(i) + "] activated");
-      }
-      if (greenTicks[i]>=100) {
+      if (greenTicks[i]>=500) {
         leds[i] = CRGB::Green;
-        greenTicks[i] = 100;
+        greenTicks[i] = 500;
+        if(i==2) {
+          stopTime = millis() - startTime;
+          Serial.println("Completion time: [" + String(stopTime) + "]");
+        }
+      }
+      else {
+        leds[i] = CRGB::Red;
+        //leds[i] = CRGB(255, 96, 0); //Change this to add different state color
       }
     }
     else {
-      greenTicks[i] = 0;
-      if(i=5) {
-        Serial.println("Sensor [" + String(i) + "] reset");
+      if(greenTicks[i]>0) {
+        if(i==2) {
+          Serial.println("Sensor[" + String(i) + "] reached [" + String(greenTicks[i]) + "] ticks");
+          Serial.println("Sensor[" + String(i) + "] reset");
+        }
+        greenTicks[i] = 0;
+        startTime = millis();
+        leds[i] = CRGB::Red;
+        //leds[i] = CRGB(255, 96, 0); //Change this to add different state color
       }
-      leds[i] = CRGB::Red;
+      else {
+        leds[i] = CRGB::Red;
+      }
     }
   }
   FastLED.show();
