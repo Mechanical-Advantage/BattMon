@@ -1,5 +1,7 @@
 #include <FastLED.h>
 
+//define constants
+//in our case, we start with 15 batteries to be controlled by 15 RGB LEDs
 #define NUM_LEDS 15
 #define NUM_SENSORS 15
 #define DATA_PIN 10
@@ -44,20 +46,31 @@ void setup() {
 }
 // the loop function runs over and over again forever
 
+//greenTicks = how many times the photoresistor counts a green light from the charger
+//redTicks = how many times the photoresistor counts no light from the charger
 void loop() {
   for(int i=0; i<NUM_SENSORS; i++)
   {
+    //set variable for light
     int raw_light = analogRead(light_sensor_pins[i]); // read the raw value from light_sensor pin
     int light = map(raw_light, 0, 1023, 0, 100); // map the value from 0, 1023 to 0, 100
     //Serial.print(String(light_sensor_pins[i]));
     //Serial.println("Sensor [" +  String(i) + "]" + String(light)); 
     
+
+    //set counter [i] for number of times a light is counted
+    //if [i] is greater than or equal to 100, then the light value (green, pulsing, or none) is confirmed
+
+    //if the charger light is greater than the threshold, it means that the charger is currently displaying green - therefore, a green tick is counted 
+
     if (light>=thresh[i]){
       if (redTicks[i]>0) {
        redTicks[i] = 0;
       }
       greenTicks[i]++;
     }
+
+    //if the charger light is less than the threshold, it means that the charger is not currently displaying any color - a red tick is counted
     else {
       if (greenTicks[i]>0) {
        greenTicks[i] = 0;
@@ -65,6 +78,7 @@ void loop() {
        redTicks[i]++;
     }
     
+    //if the number of green ticks is larger than 100, it means the LED should turn green
     if (greenTicks[i]>=MAX_TICKS) {
         leds[i] = CRGB::Green;
         greenTicks[i] = MAX_TICKS;
@@ -72,6 +86,8 @@ void loop() {
           Serial.println("Sensor [" + String(i) + "] reset: Green");
         }
     }
+
+    //if the number of red ticks is larger than 100, it means the LED should turn red
     else if (redTicks[i]>=MAX_TICKS) {
         leds[i] = CRGB::Red;
         redTicks[i] = MAX_TICKS;
@@ -79,6 +95,8 @@ void loop() {
           Serial.println("Sensor [" + String(i) + "] reset: Red");
         }
     }
+
+    //if neither condition is satisfied, that means the charger light is pulsing (going back and forth between green and no color), so the LED should be orange
     else {
       leds[i] = CRGB(255, 96, 0); //Change this to add different state color
     }
